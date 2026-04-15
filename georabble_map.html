@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #map { height: 100vh; }
+    .popup-title { font-weight: bold; font-size: 14px; }
+    .popup-hype { font-style: italic; color: #555; margin-top: 4px; }
+    .popup-dist { color: #888; font-size: 12px; margin-top: 2px; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  const VENUE = [-31.950583689625702, 115.85827369213662];
+  const crew = [
+    ["Raster Rita",   "I REPROJECTED MY WEEKEND FOR THIS"],
+    ["Topology Tom",  "Finally, people who understand my boundary issues"],
+    ["Datum Dave",    "I haven't been this excited since GDA2020"],
+    ["Null Isla",     "Flew in from (0,0) — worth every metre"],
+    ["Buffer Barry",  "Dropping my 500m exclusion zone around fun. Tonight only."],
+  ];
+
+  const map = L.map('map').setView(VENUE, 11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO'
+  }).addTo(map);
+
+  // Venue marker
+  const venueIcon = L.divIcon({ html: '⭐', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+  L.marker(VENUE, { icon: venueIcon })
+    .addTo(map)
+    .bindPopup(`<div class="popup-title">🍺🗺️ GeoRabble Perth</div><div class="popup-dist">29 April 2026 · 5:00 PM · The Shoe Yagan Square</div>`)
+    .openPopup();
+
+  // Attendee markers
+  const personIcon = L.divIcon({ html: '📍', className: '', iconSize: [24, 24], iconAnchor: [12, 12] });
+
+  function rnd(min, max) { return Math.random() * (max - min) + min; }
+  function distKm(lat1, lon1, lat2, lon2) {
+    return Math.round(Math.sqrt(Math.pow((lat2-lat1)*111,2) + Math.pow((lon2-lon1)*111,2)) * 10) / 10;
+  }
+
+  crew.forEach(([name, hype]) => {
+    const lat = VENUE[0] + rnd(-0.3, 0.3);
+    const lng = VENUE[1] + rnd(-0.3, 0.3);
+    const dist = distKm(VENUE[0], VENUE[1], lat, lng);
+    L.marker([lat, lng], { icon: personIcon })
+      .addTo(map)
+      .bindPopup(`
+        <div class="popup-title">${name}</div>
+        <div class="popup-dist">📡 ${dist} km from venue</div>
+        <div class="popup-hype">"${hype}"</div>
+      `,{autoClose:false, closeOnClick:true})
+      .openPopup();
+  });
+</script>
+</body>
+</html>
