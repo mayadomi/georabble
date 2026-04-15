@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GeoMeetup Perth — Layers & Lagers</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:    #1a1a2e;
+      --paper:  #f5f0e8;
+      --moss:   #3d6b4f;
+      --amber:  #c8832a;
+      --grid:   rgba(61,107,79,0.1);
+    }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    header {
+      padding: 4rem 2rem 2rem;
+      max-width: 960px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--moss);
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2.4rem, 6vw, 4.5rem);
+      font-weight: 600;
+      line-height: 1.05;
+      color: var(--ink);
+    }
+
+    h1 em {
+      font-style: italic;
+      font-weight: 300;
+      color: var(--moss);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--ink);
+      opacity: 0.75;
+    }
+
+    .meta-item span { color: var(--moss); }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--moss);
+      opacity: 0.25;
+      margin: 2rem auto;
+      max-width: 960px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 2rem;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+      align-items: start;
+    }
+
+    @media (max-width: 720px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .map-wrap { position: relative; }
+
+    .map-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--moss);
+      margin-bottom: 0.6rem;
+    }
+
+    #map {
+      height: 460px;
+      border-radius: 4px;
+      border: 1px solid rgba(61,107,79,0.3);
+      overflow: hidden;
+    }
+
+    .map-note {
+      font-size: 0.65rem;
+      color: var(--ink);
+      opacity: 0.45;
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+
+    .ticket-panel {
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 4px;
+      padding: 2rem;
+      position: sticky;
+      top: 2rem;
+    }
+
+    .ticket-panel h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 300;
+      font-size: 1.6rem;
+      margin-bottom: 0.4rem;
+      color: var(--paper);
+    }
+
+    .ticket-panel .price {
+      font-size: 0.75rem;
+      color: var(--amber);
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+    }
+
+    .ticket-panel .spots {
+      font-size: 0.7rem;
+      opacity: 0.5;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .ticket-panel .spots strong {
+      color: var(--amber);
+      opacity: 1;
+    }
+
+    .cta-btn {
+      display: block;
+      width: 100%;
+      padding: 0.9rem 1.5rem;
+      background: var(--moss);
+      color: var(--paper);
+      text-align: center;
+      text-decoration: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 3px;
+      transition: background 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .cta-btn:hover { background: #2f5240; }
+
+    .perks {
+      margin-top: 1.5rem;
+      list-style: none;
+      font-size: 0.7rem;
+      opacity: 0.6;
+      line-height: 2;
+    }
+
+    .perks li::before { content: "→  "; color: var(--amber); opacity: 1; }
+
+    .leaflet-popup-content-wrapper {
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 4px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .leaflet-popup-tip { background: var(--ink); }
+    .leaflet-popup-close-button { color: var(--paper) !important; }
+
+    .popup-name { font-weight: 500; color: var(--amber); margin-bottom: 3px; }
+    .popup-dist { opacity: 0.55; font-size: 11px; margin-bottom: 4px; }
+    .popup-hype { font-style: italic; opacity: 0.85; line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Perth · 2 May 2026 · 6:30 PM</p>
+  <h1>Layers <em>&</em><br>Lagers</h1>
+  <div class="meta">
+    <div class="meta-item"><span>📍</span> Perth CBD, WA</div>
+    <div class="meta-item"><span>🗺️</span> GeoMeetup Perth</div>
+    <div class="meta-item"><span>🎟️</span> $15 · 50 spots</div>
+  </div>
+</header>
+
+<hr class="divider"/>
+
+<div class="layout">
+
+  <div class="map-wrap">
+    <p class="map-label">// attendee map — click markers for hype</p>
+    <div id="map"></div>
+    <p class="map-note">Attendee locations are approximate and purely for dramatic effect.</p>
+  </div>
+
+  <div class="ticket-panel">
+    <h2>Get your<br><em style="font-style:italic;color:var(--amber)">ticket.</em></h2>
+    <p class="price">$15.00 · GENERAL ADMISSION</p>
+    <p class="spots">⚠️ <strong>45 spots</strong> remaining — don't get clipped by the extent.</p>
+
+    <!-- ✏️ REPLACE YOUR-ORG/YOUR-EVENT with your Ti.to slug -->
+    <script src="https://js.tito.io/v2" async></script>
+    <tito-widget event="YOUR-ORG/YOUR-EVENT"></tito-widget>
+
+    <noscript>
+      <a class="cta-btn" href="https://ti.to/YOUR-ORG/YOUR-EVENT" target="_blank">
+        Register Now →
+      </a>
+    </noscript>
+
+    <ul class="perks">
+      <li>Drinks on arrival</li>
+      <li>Lightning talks</li>
+      <li>Questionable spatial puns</li>
+      <li>People who get it</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+  const VENUE = [-31.9505, 115.8575];
+
+  const crew = [
+    ["Raster Rita",   "I REPROJECTED MY WEEKEND FOR THIS"],
+    ["Topology Tom",  "Finally, people who understand my boundary issues"],
+    ["Datum Dave",    "I haven't been this excited since GDA2020"],
+    ["Null Isla",     "Flew in from (0,0) — worth every metre"],
+    ["Buffer Barry",  "Dropping my 500m exclusion zone around fun. Tonight only."],
+  ];
+
+  const map = L.map('map').setView(VENUE, 11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO'
+  }).addTo(map);
+
+  const starIcon = L.divIcon({ html: '⭐', className: '', iconSize: [28,28], iconAnchor: [14,14] });
+  L.marker(VENUE, { icon: starIcon })
+    .addTo(map)
+    .bindPopup(`<div class="popup-name">📍 GeoMeetup Perth</div><div class="popup-hype">Layers & Lagers · 2 May, 6:30 PM</div>`,
+      { autoClose: false, closeOnClick: false })
+    .openPopup();
+
+  const pinIcon = L.divIcon({ html: '📍', className: '', iconSize: [24,24], iconAnchor: [12,12] });
+
+  function rnd(min, max) { return Math.random() * (max - min) + min; }
+  function distKm(a, b) {
+    return Math.round(Math.sqrt(Math.pow((b[0]-a[0])*111,2) + Math.pow((b[1]-a[1])*111,2)) * 10) / 10;
+  }
+
+  crew.forEach(([name, hype]) => {
+    const pt = [VENUE[0] + rnd(-0.25, 0.25), VENUE[1] + rnd(-0.25, 0.25)];
+    const dist = distKm(VENUE, pt);
+    L.marker(pt, { icon: pinIcon })
+      .addTo(map)
+      .bindPopup(`
+        <div class="popup-name">${name}</div>
+        <div class="popup-dist">📡 ${dist} km from venue</div>
+        <div class="popup-hype">"${hype}"</div>
+      `, { autoClose: false, closeOnClick: false })
+      .openPopup();
+  });
+</script>
+</body>
+</html>
